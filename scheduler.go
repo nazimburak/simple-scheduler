@@ -10,7 +10,7 @@ import (
 	"github.com/nazimburak/cronkit"
 )
 
-const tickInterval = 5 * time.Second
+var tickInterval = 5 * time.Second
 
 type job struct {
 	name           string
@@ -35,7 +35,7 @@ func New() *Scheduler {
 }
 
 // Register adds a job to the scheduler. Either cronExpr or runAt must be provided.
-func (s *Scheduler) Register(name, cronExpr string, runAt *time.Time, task func(context.Context) error) error {
+func (s *Scheduler) Register(name string, cronExpr *string, runAt *time.Time, task func(context.Context) error) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -52,8 +52,8 @@ func (s *Scheduler) Register(name, cronExpr string, runAt *time.Time, task func(
 	}
 
 	switch {
-	case cronExpr != "":
-		expr, err := cronkit.Parse(cronExpr)
+	case cronExpr != nil:
+		expr, err := cronkit.Parse(*cronExpr)
 		if err != nil {
 			return fmt.Errorf("invalid cron expression: %w", err)
 		}
@@ -72,29 +72,31 @@ func (s *Scheduler) Register(name, cronExpr string, runAt *time.Time, task func(
 // Start begins the scheduler loop.
 // It checks every 5 seconds if any job is due and runs it in a separate goroutine.
 func (s *Scheduler) Start() {
-	for {
-		select {
-		case <-s.stopCh:
-			return
-		default:
-			now := time.Now()
+	go func() {
+		for {
+			select {
+			case <-s.stopCh:
+				return
+			default:
+				now := time.Now()
 
-			s.mu.Lock()
-			for _, job := range s.jobs {
-				if job.running {
-					continue
+				s.mu.Lock()
+				for _, job := range s.jobs {
+					if job.running {
+						continue
+					}
+					if !job.nextRun.IsZero() && !now.Before(job.nextRun) {
+						job.running = true
+						s.wg.Add(1)
+						go s.run(job)
+					}
 				}
-				if !job.nextRun.IsZero() && !now.Before(job.nextRun) {
-					job.running = true
-					s.wg.Add(1)
-					go s.run(job)
-				}
+				s.mu.Unlock()
+
+				time.Sleep(tickInterval)
 			}
-			s.mu.Unlock()
-
-			time.Sleep(tickInterval)
 		}
-	}
+	}()
 }
 
 // run executes a single job and schedules its next run (if cron-based).
