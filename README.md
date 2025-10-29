@@ -42,17 +42,17 @@ s.Start()
 
 ## Behavior & Notes
 
-| Behavior                      | Description                                                                                     |
-|-------------------------------|-------------------------------------------------------------------------------------------------|
+| Behavior                      | Description                                                                                 |
+|-------------------------------|---------------------------------------------------------------------------------------------|
 | **Scheduler Execution** | `Start()` is non-blocking, it automatically launches the scheduler in a separate goroutine. |
-| **Job Identification** | Each job must have a unique name. Duplicate names cause registration to fail.                   |
-| **Scheduling**       | Either `cronExpr` or `runAt` must be provided (not both nil).                                   |
-| **Tick Interval**          | Default check interval is 5 seconds                                                             |
-| **Graceful Stop**  | `Stop()` waits for all active jobs to finish before returning.                                  |
+| **Job Identification** | Each job must have a unique name. Duplicate names cause registration to fail.               |
+| **Scheduling**       | Either `cronExpr` or `runAt` must be provided (not both nil).                               |
+| **Tick Interval**          | Default check interval is `5` seconds.                                                        |
+| **Graceful Stop**  | `Stop()` waits for all active jobs to finish before returning.                              |
 
 ---
 
-## Planned Futures
+## Planned Features
 
 - **Retry mechanism** `(WithRetry)`: Configurable retry count for failed jobs
 - **Overlap policy** `(WithOverlapPolicy)`: Control whether a new job run can start while the previous one is still running (skip, wait, or run concurrently)

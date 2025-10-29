@@ -70,7 +70,7 @@ func (s *Scheduler) Register(name string, cronExpr *string, runAt *time.Time, ta
 }
 
 // Start begins the scheduler loop.
-// It checks every 5 seconds if any job is due and runs it in a separate goroutine.
+// It checks if any job is due (interval defined by tickInterval) and runs it in a separate goroutine.
 func (s *Scheduler) Start() {
 	go func() {
 		for {
